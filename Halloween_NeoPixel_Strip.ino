@@ -32,61 +32,44 @@ void setup() {
 }
 
 void loop() {
-  for(int i = 1; i <= LED_COUNT; i = i + 2) {
-    strip.setPixelColor(i, 255, 0, 200);
-  }
-  for(int i = 2; i <= LED_COUNT; i = i + 2) {
-    strip.setPixelColor(i, 200, 25, 0);
-  }
-  strip.show();
-
-  delay(1000);
-
-  for(int i = 2; i <= LED_COUNT; i = i + 2) {
-    strip.setPixelColor(i, 255, 0, 200);
-  }
-  for(int i = 1; i <= LED_COUNT; i = i + 2) {
-    strip.setPixelColor(i, 200, 25, 0);
-  }
-  strip.show();
-
-  delay(1000);
-  
-  
-  // // Fill along the length of the strip in various colors...
-  // colorWipe(strip.Color(255,   0,   0)     , 50); // Red
-  // colorWipe(strip.Color(  0, 255,   0)     , 50); // Green
-  // colorWipe(strip.Color(  0,   0, 255)     , 50); // Blue
-  // colorWipe(strip.Color(  0,   0,   0, 255), 50); // True white (not RGB white)
-
-  // whiteOverRainbow(75, 5);
-
-  // pulseWhite(5);
-
-  // rainbowFade2White(3, 3, 1);
-
+  randomLights(60000, 25, 4);
+  purpleChaseOnOrange(5, 10, 5); // speed, length, numLoops
+  alternatePurpleAndOrange(10); //num cycles
 }
 
-// Fill strip pixels one after another with a color. Strip is NOT cleared
-// first; anything there will be covered pixel by pixel. Pass in color
-// (as a single 'packed' 32-bit value, which you can get by calling
-// strip.Color(red, green, blue) as shown in the loop() function above),
-// and a delay time (in milliseconds) between pixels.
-void colorWipe(uint32_t color, int wait) {
-  for(int i=0; i<strip.numPixels(); i++) { // For each pixel in strip...
-    strip.setPixelColor(i, color);         //  Set pixel's color (in RAM)
-    strip.show();                          //  Update strip to match
-    delay(wait);                           //  Pause for a moment
+void alternatePurpleAndOrange(int loops) {
+  while (loops > 0) {
+    for(int i = 0; i <= LED_COUNT; i = i + 2) {
+      strip.setPixelColor(i, 255, 0, 200);
+    }
+    for(int i = 1; i <= LED_COUNT; i = i + 2) {
+      strip.setPixelColor(i, 200, 25, 0);
+    }
+    strip.show();
+
+    delay(1000);
+
+    for(int i = 1; i <= LED_COUNT; i = i + 2) {
+      strip.setPixelColor(i, 255, 0, 200);
+    }
+    for(int i = 0; i <= LED_COUNT; i = i + 2) {
+      strip.setPixelColor(i, 200, 25, 0);
+    }
+    strip.show();
+
+    delay(1000);
+
+    loops--;
   }
 }
 
-void whiteOverRainbow(int whiteSpeed, int whiteLength) {
+void purpleChaseOnOrange(int purpleSpeed, int purpleLength, int loops) {
 
-  if(whiteLength >= strip.numPixels()) whiteLength = strip.numPixels() - 1;
+  if(purpleLength >= strip.numPixels()) purpleLength = strip.numPixels() - 1;
 
-  int      head          = whiteLength - 1;
+  int      head          = purpleLength - 1;
   int      tail          = 0;
-  int      loops         = 3;
+//  int      loops         = 3;
   int      loopNum       = 0;
   uint32_t lastTime      = millis();
   uint32_t firstPixelHue = 0;
@@ -95,10 +78,9 @@ void whiteOverRainbow(int whiteSpeed, int whiteLength) {
     for(int i=0; i<strip.numPixels(); i++) {  // For each pixel in strip...
       if(((i >= tail) && (i <= head)) ||      //  If between head & tail...
          ((tail > head) && ((i >= tail) || (i <= head)))) {
-        strip.setPixelColor(i, strip.Color(0, 0, 0, 255)); // Set white
-      } else {                                             // else set rainbow
-        int pixelHue = firstPixelHue + (i * 65536L / strip.numPixels());
-        strip.setPixelColor(i, strip.gamma32(strip.ColorHSV(pixelHue)));
+        strip.setPixelColor(i, 255, 0, 200); // Set purple section
+      } else {
+        strip.setPixelColor(i, 200, 25, 0); // set background to orange
       }
     }
 
@@ -108,7 +90,7 @@ void whiteOverRainbow(int whiteSpeed, int whiteLength) {
 
     firstPixelHue += 40; // Advance just a little along the color wheel
 
-    if((millis() - lastTime) > whiteSpeed) { // Time to update head/tail?
+    if((millis() - lastTime) > purpleSpeed) { // Time to update head/tail?
       if(++head >= strip.numPixels()) {      // Advance head, wrap around
         head = 0;
         if(++loopNum >= loops) return;
@@ -121,70 +103,45 @@ void whiteOverRainbow(int whiteSpeed, int whiteLength) {
   }
 }
 
-void pulseWhite(uint8_t wait) {
-  for(int j=0; j<256; j++) { // Ramp up from 0 to 255
-    // Fill entire strip with white at gamma-corrected brightness level 'j':
-    strip.fill(strip.Color(0, 0, 0, strip.gamma8(j)));
-    strip.show();
-    delay(wait);
+void randomLights(unsigned long time, int rate, int numUpdates) {
+  strip.clear();
+  unsigned long exit = millis() + time;
+  for(int i = 0; i < strip.numPixels(); i++) {  // fill strip with mix of orange and purple randomly
+    if(random(0, 2000) % 2 == 0) {
+      strip.setPixelColor(i, 255, 0, 200); //purple
+    }
+    else {
+      strip.setPixelColor(i, 200, 25, 0); //orange
+    }
   }
+  strip.show();
+  delay(rate);
 
-  for(int j=255; j>=0; j--) { // Ramp down from 255 to 0
-    strip.fill(strip.Color(0, 0, 0, strip.gamma8(j)));
+  while(millis() < exit) {
+    for(int i = 0; i < numUpdates; i++) {
+      strip.setPixelColor(random(0, strip.numPixels()), 255, 0, 200);
+      strip.setPixelColor(random(0, strip.numPixels()), 200, 25, 0);
+    }
     strip.show();
-    delay(wait);
+    delay(rate);
   }
 }
 
-void rainbowFade2White(int wait, int rainbowLoops, int whiteLoops) {
-  int fadeVal=0, fadeMax=100;
-
-  // Hue of first pixel runs 'rainbowLoops' complete loops through the color
-  // wheel. Color wheel has a range of 65536 but it's OK if we roll over, so
-  // just count from 0 to rainbowLoops*65536, using steps of 256 so we
-  // advance around the wheel at a decent clip.
-  for(uint32_t firstPixelHue = 0; firstPixelHue < rainbowLoops*65536;
-    firstPixelHue += 256) {
-
-    for(int i=0; i<strip.numPixels(); i++) { // For each pixel in strip...
-
-      // Offset pixel hue by an amount to make one full revolution of the
-      // color wheel (range of 65536) along the length of the strip
-      // (strip.numPixels() steps):
-      uint32_t pixelHue = firstPixelHue + (i * 65536L / strip.numPixels());
-
-      // strip.ColorHSV() can take 1 or 3 arguments: a hue (0 to 65535) or
-      // optionally add saturation and value (brightness) (each 0 to 255).
-      // Here we're using just the three-argument variant, though the
-      // second value (saturation) is a constant 255.
-      strip.setPixelColor(i, strip.gamma32(strip.ColorHSV(pixelHue, 255,
-        255 * fadeVal / fadeMax)));
+void multiChase() {  // NOT WORKING!
+  int startColor = 0;
+  int loops = 15;
+  
+  while(loops > 0) {
+    for(int x=0; x<3; x++) {  //length of 3 pixels
+      for(int i = 0; i <= LED_COUNT; i = i + 6) {
+        strip.setPixelColor(i + x + startColor, 255, 0, 200);  //set pixels to purple
+      }
+      for(int i = 3; i <= LED_COUNT; i = i + 6) {
+        strip.setPixelColor(i + x + startColor, 200, 25, 0); //set pixels to orange
+      }
     }
-
     strip.show();
-    delay(wait);
-
-    if(firstPixelHue < 65536) {                              // First loop,
-      if(fadeVal < fadeMax) fadeVal++;                       // fade in
-    } else if(firstPixelHue >= ((rainbowLoops-1) * 65536)) { // Last loop,
-      if(fadeVal > 0) fadeVal--;                             // fade out
-    } else {
-      fadeVal = fadeMax; // Interim loop, make sure fade is at max
-    }
+    startColor++;
+    loops--;
   }
-
-  for(int k=0; k<whiteLoops; k++) {
-    for(int j=0; j<256; j++) { // Ramp up 0 to 255
-      // Fill entire strip with white at gamma-corrected brightness level 'j':
-      strip.fill(strip.Color(0, 0, 0, strip.gamma8(j)));
-      strip.show();
-    }
-    delay(1000); // Pause 1 second
-    for(int j=255; j>=0; j--) { // Ramp down 255 to 0
-      strip.fill(strip.Color(0, 0, 0, strip.gamma8(j)));
-      strip.show();
-    }
-  }
-
-  delay(500); // Pause 1/2 second
 }
